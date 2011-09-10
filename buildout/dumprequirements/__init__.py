@@ -1,3 +1,4 @@
+
 import os
 import logging
 import zc.buildout.easy_install
@@ -28,6 +29,8 @@ def enable_dumping_picked_versions(old_get_dist):
             if not (dist.precedence == pkg_resources.DEVELOP_DIST or \
                     (len(requirement.specs) == 1 and requirement.specs[0][0] == '==')):
                 self.__picked_versions[dist.project_name] = dist.version
+            if not (dist.precedence == pkg_resources.DEVELOP_DIST):
+                self.__all_picked_versions[dist.project_name] = dist.version
         return dists        
     return get_dist
 
@@ -38,7 +41,7 @@ def dump_picked_versions(old_logging_shutdown, file_name, overwrite):
 
         picked_versions_top = ''
         picked_versions_bottom = ''
-        for d, v in sorted(zc.buildout.easy_install.Installer.__picked_versions.items()):
+        for d, v in sorted(zc.buildout.easy_install.Installer.__all_picked_versions.items()):
             if d in required_by:
                 req_ = "\n#Required by:\n#" + "\n#".join(required_by[d]) + "\n"
                 picked_versions_bottom += "%s%s==%s\n" % (req_, d, v)
@@ -82,6 +85,7 @@ def install(buildout):
                 in ['yes', 'true', 'on']
 
     zc.buildout.easy_install.Installer.__picked_versions = {}
+    zc.buildout.easy_install.Installer.__all_picked_versions = {}
     zc.buildout.easy_install._log_requirement = _log_requirement
     zc.buildout.easy_install.Installer._get_dist = enable_dumping_picked_versions(
                                   zc.buildout.easy_install.Installer._get_dist)
